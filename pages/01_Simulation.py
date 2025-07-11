@@ -1,59 +1,60 @@
 import streamlit as st
+import plotly.graph_objs as go
 import numpy as np
-import matplotlib.pyplot as plt
-import time
 
-st.set_page_config(page_title="결정화 시뮬레이션", layout="centered")
+st.set_page_config(page_title="결정화 시뮬레이션 (Plotly)", layout="centered")
 st.title("🔬 결정화 시뮬레이션 (지구 vs 우주)")
 
-# 선택 방식: 버튼형 radio로 설정 (label 영어, 나머지 한글)
-step = st.radio("단계를 선택하세요:", ["Stage 1: Particle Movement", "Stage 2: Crystal Growth"], index=0)
+# 환경 선택 버튼
 env = st.radio("🌍 환경 선택", ["지구", "우주"], horizontal=True)
 
+# 입자 설정
 n_particles = 80
+steps = 30
 positions = np.random.rand(n_particles, 2) * 10
+frames = []
 
-# 실시간으로 움직이게 반복문 구현
-fig, ax = plt.subplots(figsize=(4, 4))
-ax.set_xlim(0, 10)
-ax.set_ylim(0, 10)
-ax.set_xticks([])
-ax.set_yticks([])
-ax.set_facecolor('#f4f4f4')
+# 입자 움직임 시뮬레이션
+for step in range(steps):
+    if env == "지구":
+        positions[:, 1] -= np.random.rand(n_particles) * 0.2  # 침강
+    else:
+        positions += np.random.randn(n_particles, 2) * 0.2  # 무작위 확산 (우주)
 
-# 사각형 실험통 그리기
-container = plt.Rectangle((0.5, 0.5), 9, 9, color='#d6eaf8', fill=True, alpha=0.15)
-ax.add_patch(container)
+    frames.append(go.Frame(data=[
+        go.Scatter(
+            x=positions[:, 0],
+            y=positions[:, 1],
+            mode='markers',
+            marker=dict(size=6, color='royalblue', opacity=0.7)
+        )
+    ], name=str(step)))
 
-stframe = st.empty()  # 반복 출력용
+# 기본 프레임
+scatter = go.Scatter(
+    x=positions[:, 0],
+    y=positions[:, 1],
+    mode='markers',
+    marker=dict(size=6, color='royalblue', opacity=0.7)
+)
 
-for frame in range(30):
-    ax.cla()
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 10)
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_facecolor('#f4f4f4')
-    ax.add_patch(plt.Rectangle((0.5, 0.5), 9, 9, color='#d6eaf8', fill=True, alpha=0.15))
+# 레이아웃
+layout = go.Layout(
+    title=f"Stage 1: Particle Movement ({env})",
+    xaxis=dict(range=[0, 10], showgrid=False, zeroline=False),
+    yaxis=dict(range=[0, 10], showgrid=False, zeroline=False),
+    width=500,
+    height=500,
+    updatemenus=[dict(
+        type='buttons',
+        showactive=False,
+        buttons=[dict(label='▶ Play', method='animate', args=[None, {
+            "frame": {"duration": 100, "redraw": True},
+            "fromcurrent": True
+        }])]
+    )]
+)
 
-    if step == "Stage 1: Particle Movement":
-        for i in range(n_particles):
-            if env == "지구":
-                positions[i, 1] -= np.random.rand() * 0.2  # 침강
-            else:
-                positions[i] += np.random.randn(2) * 0.2  # 무작위 확산
+fig = go.Figure(data=[scatter], layout=layout, frames=frames)
+st.plotly_chart(fig)
 
-    elif step == "Stage 2: Crystal Growth":
-        center = np.array([5, 5])
-        for i in range(n_particles):
-            direction = center - positions[i]
-            if env == "지구":
-                positions[i] += direction * 0.2 + np.random.randn(2) * 0.1
-            else:
-                positions[i] += direction * 0.05 + np.random.randn(2) * 0.02
-
-    # 제목만 영어
-    ax.set_title(f"{step} ({env})")
-    ax.scatter(positions[:, 0], positions[:, 1], alpha=0.6, color="#2980b9")
-    stframe.pyplot(fig)
-    time.sleep(0.1)
