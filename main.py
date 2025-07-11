@@ -1,6 +1,16 @@
 import streamlit as st
 
-st.title("💎 우주에서의 약물 결정화 시뮬레이션")
+st.set_page_config(page_title="결정화 시뮬레이션", layout="centered")
+
+st.markdown("""
+<style>
+h1:hover .markdown-link {
+    display: none !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("# 💎 우주에서의 약물 결정화 시뮬레이션")
 
 st.markdown("""
 이 앱은 지구와 우주에서 약물 결정화가 어떻게 다르게 일어나는지를 시각적으로 보여주기 위해 제작되었습니다.
